@@ -1,48 +1,26 @@
-pub struct GLHandle {
-    handle: u32,
+use super::handle::{BufferUsage, GLHandle};
+
+struct ByteBuffer {
+    handle: GLHandle,
+    size: usize,
 }
 
-impl GLHandle {
-    pub fn get(&self) -> u32 {
-        self.handle
+impl ByteBuffer {
+    fn handle(&self) -> &GLHandle {
+        &self.handle
     }
 
-    pub fn is_valid(&self) -> bool {
-        self.handle > 0
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub enum Usage {
-    Attribute,
-    Index,
-    Uniform,
-    Storage,
-}
-
-impl From<Usage> for gl::types::GLenum {
-    fn from(value: Usage) -> Self {
-        match value {
-            Usage::Attribute => gl::ARRAY_BUFFER,
-            Usage::Index => gl::ELEMENT_ARRAY_BUFFER,
-            Usage::Uniform => gl::UNIFORM_BUFFER,
-            Usage::Storage => gl::SHADER_STORAGE_BUFFER,
+    fn bind(&self, usage: BufferUsage) {
+        unsafe {
+            gl::BindBuffer(usage.into(), self.handle.get());
         }
     }
-}
 
-pub enum AccessType {
-    WriteOnly,
-    ReadOnly,
-    ReadWrite,
-}
+    fn bind_to(&self, usage: BufferUsage, index: u32) {
+        assert!(matches!(usage, BufferUsage::Uniform | BufferUsage::Storage));
 
-impl From<AccessType> for gl::types::GLenum {
-    fn from(value: AccessType) -> Self {
-        match value {
-            AccessType::WriteOnly => gl::WRITE_ONLY,
-            AccessType::ReadOnly => gl::READ_ONLY,
-            AccessType::ReadWrite => gl::READ_WRITE,
+        unsafe {
+            gl::BindBufferBase(usage.into(), index, self.handle.get());
         }
     }
 }
