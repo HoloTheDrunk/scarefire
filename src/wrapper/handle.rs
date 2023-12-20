@@ -1,3 +1,5 @@
+use gl::types::GLuint;
+
 pub struct GLHandle {
     handle: u32,
 }
@@ -9,6 +11,10 @@ impl GLHandle {
 
     pub fn is_valid(&self) -> bool {
         self.handle > 0
+    }
+
+    pub fn new(handle: GLuint) -> Self {
+        Self { handle }
     }
 }
 
