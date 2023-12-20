@@ -4,7 +4,7 @@ use gl::types::GLuint;
 
 use super::handle::{BufferUsage, GLHandle};
 
-struct ByteBuffer {
+struct GLBuffer {
     handle: GLHandle,
     size: usize,
 }
@@ -17,7 +17,7 @@ fn create_buffer_handle() -> GLuint {
     handle
 }
 
-impl ByteBuffer {
+impl GLBuffer {
     fn new<T>(data: &[T]) -> Self {
         let handle = GLHandle::new(create_buffer_handle());
         let size = data.len();
@@ -57,7 +57,7 @@ impl ByteBuffer {
     }
 }
 
-impl Drop for ByteBuffer {
+impl Drop for GLBuffer {
     fn drop(&mut self) {
         unsafe { gl::DeleteBuffers(1, self.handle.get() as *const u32) }
     }
