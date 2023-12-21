@@ -4,9 +4,10 @@ use gl::types::GLuint;
 
 use super::handle::{BufferUsage, GLHandle};
 
-struct GLBuffer {
+pub struct GLBuffer<T> {
     handle: GLHandle,
     size: usize,
+    marker: std::marker::PhantomData<T>, // CURSED
 }
 
 fn create_buffer_handle() -> GLuint {
@@ -17,8 +18,8 @@ fn create_buffer_handle() -> GLuint {
     handle
 }
 
-impl GLBuffer {
-    fn new<T>(data: &[T]) -> Self {
+impl<T> GLBuffer<T> {
+    pub fn new(data: &[T]) -> Self {
         let handle = GLHandle::new(create_buffer_handle());
         let size = data.len();
 
@@ -31,24 +32,28 @@ impl GLBuffer {
             );
         }
 
-        Self { handle, size }
+        Self {
+            handle,
+            size,
+            marker: std::marker::PhantomData::<T>, // CURSED
+        }
     }
 
-    fn handle(&self) -> &GLHandle {
+    pub fn handle(&self) -> &GLHandle {
         &self.handle
     }
 
-    fn size(&self) -> usize {
+    pub fn size(&self) -> usize {
         self.size
     }
 
-    fn bind(&self, usage: BufferUsage) {
+    pub fn bind(&self, usage: BufferUsage) {
         unsafe {
             gl::BindBuffer(usage.into(), self.handle.get());
         }
     }
 
-    fn bind_to(&self, usage: BufferUsage, index: u32) {
+    pub fn bind_to(&self, usage: BufferUsage, index: u32) {
         assert!(matches!(usage, BufferUsage::Uniform | BufferUsage::Storage));
 
         unsafe {
@@ -57,7 +62,7 @@ impl GLBuffer {
     }
 }
 
-impl Drop for GLBuffer {
+impl<T> Drop for GLBuffer<T> {
     fn drop(&mut self) {
         unsafe { gl::DeleteBuffers(1, self.handle.get() as *const u32) }
     }
