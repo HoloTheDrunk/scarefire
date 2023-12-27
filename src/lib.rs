@@ -1,5 +1,7 @@
 mod wrapper;
 
+pub use wrapper::*;
+
 use std::{ffi::c_void, ptr::null};
 
 use {
