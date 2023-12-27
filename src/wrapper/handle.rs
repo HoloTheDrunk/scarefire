@@ -1,11 +1,11 @@
 use gl::types::GLuint;
 
 pub struct GLHandle {
-    handle: u32,
+    handle: GLuint,
 }
 
 impl GLHandle {
-    pub fn get(&self) -> u32 {
+    pub fn get(&self) -> GLuint {
         self.handle
     }
 
