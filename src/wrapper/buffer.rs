@@ -4,29 +4,34 @@ use gl::types::GLuint;
 
 use super::handle::{BufferUsage, GLHandle};
 
+/// Representation for a buffer stored on the GPU.
 pub struct GLBuffer<T> {
+    /// GPU buffer handle.
     handle: GLHandle,
+    /// Number of elements in the buffer.
     size: usize,
-    marker: std::marker::PhantomData<T>, // CURSED
-}
-
-fn create_buffer_handle() -> GLuint {
-    let handle: GLuint = 0;
-    unsafe {
-        gl::CreateBuffers(1, handle as *mut GLuint);
-    }
-    handle
+    /// Marker for the GPU buffer data type.
+    r#type: std::marker::PhantomData<T>,
 }
 
 impl<T> GLBuffer<T> {
     pub fn new(data: &[T]) -> Self {
-        let handle = GLHandle::new(create_buffer_handle());
+        fn create_buffer_handle() -> GLHandle {
+            let handle: GLuint = 0;
+            unsafe {
+                gl::CreateBuffers(1, handle as *mut GLuint);
+            }
+            GLHandle::new(handle)
+        }
+
+        let handle = create_buffer_handle();
         let size = data.len();
 
         unsafe {
             gl::NamedBufferData(
                 handle.get(),
-                size as isize,
+                // Byte size
+                (size * std::mem::size_of::<T>()) as isize,
                 data.as_ptr() as *const c_void,
                 gl::STATIC_DRAW,
             );
@@ -35,7 +40,7 @@ impl<T> GLBuffer<T> {
         Self {
             handle,
             size,
-            marker: std::marker::PhantomData::<T>, // CURSED
+            r#type: std::marker::PhantomData::<T>,
         }
     }
 
@@ -45,6 +50,10 @@ impl<T> GLBuffer<T> {
 
     pub fn size(&self) -> usize {
         self.size
+    }
+
+    pub fn byte_size(&self) -> usize {
+        self.size * std::mem::size_of::<T>()
     }
 
     pub fn bind(&self, usage: BufferUsage) {
