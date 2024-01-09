@@ -17,6 +17,6 @@ impl PartialOrd for UniformLocationInfo {
     }
 }
 
-struct Program {
+pub struct Program {
     // handle: gl::
 }
