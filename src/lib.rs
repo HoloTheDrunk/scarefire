@@ -1,3 +1,4 @@
+#![allow(unused)]
 mod wrapper;
 
 pub use wrapper::*;
