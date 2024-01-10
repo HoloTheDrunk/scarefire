@@ -34,8 +34,18 @@ impl SceneObject {
     }
 
     pub fn get_transform_components(&self) -> TransformComponents {
-        // TODO: Oh my god I need to implement glm::decompose myself???
-        todo!()
+        let (scale, rotation, position, skew, perspective) = self
+            .transform
+            .decompose()
+            .expect("Failed to decompose mat4");
+
+        TransformComponents {
+            position,
+            rotation,
+            scale,
+            skew,
+            perspective,
+        }
     }
 }
 
