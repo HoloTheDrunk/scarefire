@@ -15,9 +15,17 @@ impl PartialEq for UniformLocationInfo {
     }
 }
 
+impl Eq for UniformLocationInfo {}
+
 impl PartialOrd for UniformLocationInfo {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.hash.partial_cmp(&other.hash)
+    }
+}
+
+impl Ord for UniformLocationInfo {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.hash.cmp(&other.hash)
     }
 }
 
@@ -171,11 +179,43 @@ impl Program {
     }
 
     fn fetch_uniform_locations(handle: u32) -> Vec<UniformLocationInfo> {
-        unsafe {
-            let uniform_count = 0;
-            // gl::GetProgramiv(handle);
+        let mut uniform_locations = Vec::new();
 
-            Vec::new()
+        unsafe {
+            let mut uniform_count = 0;
+            gl::GetProgramiv(handle, gl::ACTIVE_UNIFORMS, &mut uniform_count);
+
+            for i in 0..uniform_count {
+                let mut name = [0u8; 1024];
+                let mut len = 0i32;
+                let mut discard = 0i32;
+                let mut type_ = gl::NONE;
+                gl::GetActiveUniform(
+                    handle,
+                    i as gl::types::GLuint,
+                    1024,
+                    &mut len,
+                    &mut discard,
+                    &mut type_,
+                    &mut name as *mut u8 as *mut i8,
+                );
+
+                uniform_locations.push(UniformLocationInfo {
+                    hash: str_hash(
+                        name.into_iter()
+                            .map(char::from)
+                            .collect::<String>()
+                            .as_ref(),
+                    ),
+                    location: gl::GetUniformLocation(handle, &name as *const u8 as *const i8)
+                        as u32,
+                });
+            }
+
+            uniform_locations.sort();
+            assert!(!uniform_locations.windows(2).any(|arr| arr[0] == arr[1]));
+
+            uniform_locations
         }
     }
 }
