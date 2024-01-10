@@ -52,6 +52,18 @@ impl From<ImageFormat> for ImageFormatGL {
     }
 }
 
+pub struct TextureData {
+    data: Box<[u8]>,
+    size: glm::UVec2,
+    format: ImageFormat
+}
+
+impl TextureData {
+    pub fn from_file(path: &str) -> Option<TextureData> {
+        todo!();
+    }
+}
+
 pub struct Texture {
     handle: GLHandle,
     size: glm::UVec2,
@@ -59,6 +71,13 @@ pub struct Texture {
 }
 
 impl Texture {
+    pub fn new(data : &TextureData) -> Self {
+        Self {
+            handle: todo!(),
+            size: todo!(),
+            format: todo!(),
+        }
+    }
     pub fn bind(&self, index: GLuint) {
         unsafe {
             gl::BindTextureUnit(index, self.handle.get());
@@ -84,9 +103,8 @@ impl Texture {
     }
 
     /// Return number of mip levels needed.
-    // TODO: Figure out why this is static in the original OM3D impl
-    pub fn mip_levels(&self) -> u32 {
-        let side = self.size.max() as f32;
+    pub fn mip_levels(size: glm::UVec2) -> u32 {
+        let side = size.max() as f32;
         1 + side.log2().floor() as u32
     }
 }
