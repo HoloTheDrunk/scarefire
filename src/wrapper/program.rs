@@ -51,6 +51,14 @@ macro_rules! set_uniform {
     };
 }
 
+pub struct ShaderPaths {
+    vertex: String,
+    geometry: Option<String>,
+    tess_control: Option<String>,
+    tess_evaluation: Option<String>,
+    fragment: String,
+}
+
 pub struct Program {
     handle: GLHandle,
     uniform_locations: Vec<UniformLocationInfo>,
@@ -58,21 +66,40 @@ pub struct Program {
 }
 
 impl Program {
-    pub fn new_shader(frag: &str, vert: &str) -> Self {
+    pub fn new_shader(paths: ShaderPaths) -> Self {
         unsafe {
             let handle = gl::CreateProgram();
-            let vert_handle = load_shader(vert, gl::VERTEX_SHADER);
-            let frag_handle = load_shader(vert, gl::FRAGMENT_SHADER);
 
-            gl::AttachShader(handle, vert_handle);
-            gl::AttachShader(handle, frag_handle);
+            let vert_handle = load_shader(paths.vertex.as_ref(), gl::VERTEX_SHADER);
+            let geometry_handle = paths
+                .geometry
+                .map(|path| load_shader(path.as_ref(), gl::GEOMETRY_SHADER));
+            let tess_control_handle = paths
+                .tess_control
+                .map(|path| load_shader(path.as_ref(), gl::TESS_CONTROL_SHADER));
+            let tess_eval_handle = paths
+                .tess_evaluation
+                .map(|path| load_shader(path.as_ref(), gl::TESS_EVALUATION_SHADER));
+            let frag_handle = load_shader(paths.fragment.as_ref(), gl::FRAGMENT_SHADER);
+
+            let shader_handles = [
+                Some(vert_handle),
+                geometry_handle,
+                tess_control_handle,
+                tess_eval_handle,
+                Some(frag_handle),
+            ];
+
+            for shader_handle in shader_handles.iter().flatten() {
+                gl::AttachShader(handle, *shader_handle);
+            }
 
             gl::LinkProgram(handle);
-
             check_program_error(handle);
 
-            gl::DeleteShader(vert_handle);
-            gl::DeleteShader(frag_handle);
+            for shader_handle in shader_handles.iter().flatten() {
+                gl::DeleteShader(*shader_handle);
+            }
 
             Self {
                 handle: GLHandle::new(handle),
@@ -90,7 +117,6 @@ impl Program {
             gl::AttachShader(handle, comp_shader);
 
             gl::LinkProgram(handle);
-
             check_program_error(handle);
 
             gl::DeleteShader(comp_shader);
@@ -167,8 +193,12 @@ fn load_shader(path: &str, r#type: gl::types::GLenum) -> u32 {
             shader,
             match r#type {
                 gl::VERTEX_SHADER => "Vertex",
+                gl::TESS_CONTROL_SHADER => "Tesselation Control",
+                gl::TESS_EVALUATION_SHADER => "Tesselation Evaluation",
+                gl::GEOMETRY_SHADER => "Geometry",
                 gl::FRAGMENT_SHADER => "Fragment",
-                _ => panic!("Shaders other than Vertex and Fragment not supported"),
+                gl::COMPUTE_SHADER => "Compute",
+                _ => panic!("Unsupported shader type"),
             },
         );
 
