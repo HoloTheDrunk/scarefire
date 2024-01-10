@@ -39,20 +39,90 @@ pub struct Program {
     is_compute: bool,
 }
 
+fn compile_shader(shader: u32, shader_code: &str) {
+    unsafe {
+        gl::ShaderSource(
+            shader,
+            1,
+            &(shader_code.as_bytes().as_ptr().cast()),
+            &(shader_code.len().try_into().unwrap()),
+        );
+
+        gl::CompileShader(shader);
+    }
+}
+
+fn check_shader_error(shader: u32, shader_type: &str) {
+    unsafe {
+        let mut success = 0;
+        gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut success);
+
+        if success == 0 {
+            let mut log_length = 0;
+            gl::GetShaderiv(shader, gl::INFO_LOG_LENGTH, &mut log_length);
+
+            let mut vec = Vec::<u8>::with_capacity(log_length as usize);
+            let mut returned_log_length = 0;
+            gl::GetShaderInfoLog(
+                shader,
+                log_length,
+                &mut returned_log_length,
+                vec.as_mut_ptr().cast(),
+            );
+
+            vec.set_len(returned_log_length.try_into().unwrap());
+
+            panic!(
+                "{shader_type} compile error: {}",
+                String::from_utf8_lossy(&vec)
+            )
+        }
+    }
+}
+
 impl Program {
-    pub fn new_shader() -> Self {
-        Self {
-            handle: todo!(),
-            uniform_locations: todo!(),
-            is_compute: todo!(),
+    pub fn new_shader(frag: &str, vert: &str) -> Self {
+        unsafe {
+            let handle = gl::CreateProgram();
+            let vert_handle = load_shader(vert, gl::VERTEX_SHADER);
+            let frag_handle = load_shader(vert, gl::FRAGMENT_SHADER);
+
+            gl::AttachShader(handle, vert_handle);
+            gl::AttachShader(handle, frag_handle);
+
+            gl::LinkProgram(handle);
+
+            check_program_error(handle);
+
+            gl::DeleteShader(vert_handle);
+            gl::DeleteShader(frag_handle);
+
+            Self {
+                handle: GLHandle::new(handle),
+                uniform_locations: Program::fetch_uniform_locations(handle),
+                is_compute: false,
+            }
         }
     }
 
-    pub fn new_compute_shader() -> Self {
-        Self {
-            handle: todo!(),
-            uniform_locations: todo!(),
-            is_compute: todo!(),
+    pub fn new_compute_shader(comp: &str) -> Self {
+        unsafe {
+            let handle = gl::CreateProgram();
+            let comp_shader = load_shader(comp, gl::COMPUTE_SHADER);
+
+            gl::AttachShader(handle, comp_shader);
+
+            gl::LinkProgram(handle);
+
+            check_program_error(handle);
+
+            gl::DeleteShader(comp_shader);
+
+            Self {
+                handle: GLHandle::new(handle),
+                uniform_locations: Program::fetch_uniform_locations(handle),
+                is_compute: true,
+            }
         }
     }
 
@@ -94,5 +164,64 @@ impl Program {
             .iter()
             .find(|e| e.hash == hash)
             .map(|e| e.location)
+    }
+
+    fn fetch_uniform_locations(handle: u32) -> Vec<UniformLocationInfo> {
+        unsafe {
+            let uniform_count = 0;
+            // gl::GetProgramiv(handle);
+
+            Vec::new()
+        }
+    }
+}
+
+fn load_shader(path: &str, r#type: gl::types::GLenum) -> u32 {
+    let code = std::fs::read_to_string(path).expect(format!("Couldn't open {path:?}").as_str());
+
+    unsafe {
+        let shader = gl::CreateShader(r#type);
+        assert_ne!(shader, 0);
+
+        compile_shader(shader, code.as_str());
+
+        check_shader_error(
+            shader,
+            match r#type {
+                gl::VERTEX_SHADER => "Vertex",
+                gl::FRAGMENT_SHADER => "Fragment",
+                _ => panic!("Shaders other than Vertex and Fragment not supported"),
+            },
+        );
+
+        shader
+    }
+}
+
+fn check_program_error(program: u32) {
+    unsafe {
+        let mut success = 0;
+        gl::GetProgramiv(program, gl::LINK_STATUS, &mut success);
+
+        if success == 0 {
+            let mut log_length = 0;
+            gl::GetProgramiv(program, gl::INFO_LOG_LENGTH, &mut log_length);
+
+            let mut vec = Vec::<u8>::with_capacity(log_length as usize);
+            let mut returned_log_length = 0;
+            gl::GetProgramInfoLog(
+                program,
+                log_length,
+                &mut returned_log_length,
+                vec.as_mut_ptr().cast(),
+            );
+
+            vec.set_len(returned_log_length.try_into().unwrap());
+
+            panic!(
+                "Program link error: {} ({vec:?})",
+                String::from_utf8_lossy(&vec)
+            )
+        }
     }
 }
