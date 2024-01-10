@@ -124,18 +124,16 @@ impl Program {
             gl::ProgramUniform4f(handle, loc, value.x, value.y, value.z, value.w);
         },
 
-        // FIXME: Figure out how to pass matrix uniforms
         &glm::Mat2 as mat2 => |handle, value: &glm::Mat2, loc| unsafe {
-            // gl::ProgramUniformMatrix2fv(handle, loc, 1, gl::FALSE, value.as_array().as_ptr());
-            todo!();
+            gl::ProgramUniformMatrix2fv(handle, loc, 1, gl::FALSE, value as *const glm::Mat2 as *const f32);
         },
 
         &glm::Mat3 as mat3 => |handle, value: &glm::Mat3, loc| unsafe {
-            todo!();
+            gl::ProgramUniformMatrix3fv(handle, loc, 1, gl::FALSE, value as *const glm::Mat3 as *const f32);
         },
 
         &glm::Mat4 as mat4 => |handle, value: &glm::Mat4, loc| unsafe {
-            todo!();
+            gl::ProgramUniformMatrix4fv(handle, loc, 1, gl::FALSE, value as *const glm::Mat4 as *const f32);
         },
     }
 
