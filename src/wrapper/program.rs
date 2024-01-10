@@ -39,47 +39,6 @@ pub struct Program {
     is_compute: bool,
 }
 
-fn compile_shader(shader: u32, shader_code: &str) {
-    unsafe {
-        gl::ShaderSource(
-            shader,
-            1,
-            &(shader_code.as_bytes().as_ptr().cast()),
-            &(shader_code.len().try_into().unwrap()),
-        );
-
-        gl::CompileShader(shader);
-    }
-}
-
-fn check_shader_error(shader: u32, shader_type: &str) {
-    unsafe {
-        let mut success = 0;
-        gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut success);
-
-        if success == 0 {
-            let mut log_length = 0;
-            gl::GetShaderiv(shader, gl::INFO_LOG_LENGTH, &mut log_length);
-
-            let mut vec = Vec::<u8>::with_capacity(log_length as usize);
-            let mut returned_log_length = 0;
-            gl::GetShaderInfoLog(
-                shader,
-                log_length,
-                &mut returned_log_length,
-                vec.as_mut_ptr().cast(),
-            );
-
-            vec.set_len(returned_log_length.try_into().unwrap());
-
-            panic!(
-                "{shader_type} compile error: {}",
-                String::from_utf8_lossy(&vec)
-            )
-        }
-    }
-}
-
 impl Program {
     pub fn new_shader(frag: &str, vert: &str) -> Self {
         unsafe {
@@ -195,6 +154,47 @@ fn load_shader(path: &str, r#type: gl::types::GLenum) -> u32 {
         );
 
         shader
+    }
+}
+
+fn compile_shader(shader: u32, shader_code: &str) {
+    unsafe {
+        gl::ShaderSource(
+            shader,
+            1,
+            &(shader_code.as_bytes().as_ptr().cast()),
+            &(shader_code.len().try_into().unwrap()),
+        );
+
+        gl::CompileShader(shader);
+    }
+}
+
+fn check_shader_error(shader: u32, shader_type: &str) {
+    unsafe {
+        let mut success = 0;
+        gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut success);
+
+        if success == 0 {
+            let mut log_length = 0;
+            gl::GetShaderiv(shader, gl::INFO_LOG_LENGTH, &mut log_length);
+
+            let mut vec = Vec::<u8>::with_capacity(log_length as usize);
+            let mut returned_log_length = 0;
+            gl::GetShaderInfoLog(
+                shader,
+                log_length,
+                &mut returned_log_length,
+                vec.as_mut_ptr().cast(),
+            );
+
+            vec.set_len(returned_log_length.try_into().unwrap());
+
+            panic!(
+                "{shader_type} compile error: {}",
+                String::from_utf8_lossy(&vec)
+            )
+        }
     }
 }
 
