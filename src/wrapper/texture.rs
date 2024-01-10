@@ -1,3 +1,5 @@
+use stb_image::stb_image::stbi_load;
+
 use crate::handle::{AccessType, GLHandle};
 
 use {
@@ -53,14 +55,32 @@ impl From<ImageFormat> for ImageFormatGL {
 }
 
 pub struct TextureData {
-    data: Box<[u8]>,
+    data: Vec<u8>,
     size: glm::UVec2,
     format: ImageFormat
 }
 
 impl TextureData {
     pub fn from_file(path: &str) -> Option<TextureData> {
-        todo!();
+        let mut width = 0;
+        let mut height = 0;
+        let mut channels = 0;
+
+        let bytes = unsafe {
+            let img = stbi_load(path.as_ptr() as * const std::os::raw::c_char, &mut width, &mut height, &mut channels, 4);
+            std::slice::from_raw_parts(img, (width * height * channels) as usize).to_vec()
+        };
+
+
+        if (width <= 0 || height <= 0 || channels <= 0) {
+            return None;
+        }
+
+        Some(TextureData {
+            data: bytes,
+            size: glm::uvec2(width as u32, height as u32),
+            format: ImageFormat::Rgba8Unorm,
+        })
     }
 }
 

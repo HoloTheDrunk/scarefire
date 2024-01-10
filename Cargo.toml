@@ -9,3 +9,4 @@ edition = "2021"
 gl = "0.14.0"
 glfw = "0.54.0"
 glm = { git = "https://github.com/HoloTheDrunk/glm-rs" }
+stb_image = "0.3.0"
