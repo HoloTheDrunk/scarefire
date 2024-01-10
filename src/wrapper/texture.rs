@@ -8,7 +8,7 @@ use {
 };
 
 #[derive(Clone, Copy)]
-enum ImageFormat {
+pub enum ImageFormat {
     Rgba8Unorm,
     Rgba8SRgb,
 
@@ -21,12 +21,12 @@ enum ImageFormat {
 }
 
 impl ImageFormat {
-    fn to_gl(&self) -> ImageFormatGL {
+    pub fn to_gl(&self) -> ImageFormatGL {
         ImageFormatGL::from(*self)
     }
 }
 
-struct ImageFormatGL {
+pub struct ImageFormatGL {
     format: GLenum,
     internal_format: GLenum,
     component_type: GLenum,
@@ -90,14 +90,49 @@ pub struct Texture {
     format: ImageFormat,
 }
 
+fn create_handle() -> GLHandle {
+    let mut handle = 0;
+    unsafe { gl::CreateTextures(gl::TEXTURE_2D, 1, &mut handle); }
+
+    GLHandle::new(handle)
+}
+
 impl Texture {
     pub fn new(data : &TextureData) -> Self {
-        Self {
-            handle: todo!(),
-            size: todo!(),
-            format: todo!(),
-        }
+        let new = Self {
+            handle: create_handle(),
+            size: data.size,
+            format: data.format,
+        };
+
+        unsafe {
+            let gl_format: ImageFormatGL = data.format.to_gl();
+
+            gl::TextureStorage2D(new.handle.get(), Texture::mip_levels(new.size) as i32,
+                gl_format.internal_format, new.size.x as i32, new.size.y as i32);
+            gl::TextureSubImage2D(new.handle.get(), 0, 0, 0, new.size.x as i32, new.size.y as i32,
+                gl_format.format, gl_format.component_type, data.data.as_ptr() as *const std::ffi::c_void);
+            gl::GenerateTextureMipmap(new.handle.get());
+        };
+
+        new
     }
+
+    pub fn new_from_format(size: &glm::UVec2, format : &ImageFormat) -> Self {
+        let new = Self {
+            handle: create_handle(),
+            size: *size,
+            format: *format,
+        };
+
+        unsafe {
+            let gl_format: ImageFormatGL = format.to_gl();
+            gl::TextureStorage2D(new.handle.get(), 1, gl_format.internal_format, new.size.x as i32, new.size.y as i32);
+        };
+
+        new
+    }
+
     pub fn bind(&self, index: GLuint) {
         unsafe {
             gl::BindTextureUnit(index, self.handle.get());
@@ -126,5 +161,16 @@ impl Texture {
     pub fn mip_levels(size: glm::UVec2) -> u32 {
         let side = size.max() as f32;
         1 + side.log2().floor() as u32
+    }
+}
+
+impl Drop for Texture {
+    fn drop(&mut self) {
+        let handle = self.handle.get();
+        if (handle != 0) {
+            unsafe {
+                gl::DeleteTextures(1, &handle);
+            }
+        }
     }
 }
