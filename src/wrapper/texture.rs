@@ -57,7 +57,7 @@ impl From<ImageFormat> for ImageFormatGL {
 pub struct TextureData {
     data: Vec<u8>,
     size: glm::UVec2,
-    format: ImageFormat
+    format: ImageFormat,
 }
 
 impl TextureData {
@@ -67,10 +67,18 @@ impl TextureData {
         let mut channels = 0;
 
         let bytes = unsafe {
-            let img = stbi_load(path.as_ptr() as * const std::os::raw::c_char, &mut width, &mut height, &mut channels, 4);
+            let img = stbi_load(
+                path.as_ptr() as *const std::os::raw::c_char,
+                &mut width,
+                &mut height,
+                &mut channels,
+                4,
+            );
+            if (std::ptr::null() == img) {
+                return None;
+            }
             std::slice::from_raw_parts(img, (width * height * channels) as usize).to_vec()
         };
-
 
         if (width <= 0 || height <= 0 || channels <= 0) {
             return None;
@@ -92,13 +100,15 @@ pub struct Texture {
 
 fn create_handle() -> GLHandle {
     let mut handle = 0;
-    unsafe { gl::CreateTextures(gl::TEXTURE_2D, 1, &mut handle); }
+    unsafe {
+        gl::CreateTextures(gl::TEXTURE_2D, 1, &mut handle);
+    }
 
     GLHandle::new(handle)
 }
 
 impl Texture {
-    pub fn new(data : &TextureData) -> Self {
+    pub fn new(data: &TextureData) -> Self {
         let new = Self {
             handle: create_handle(),
             size: data.size,
@@ -108,17 +118,31 @@ impl Texture {
         unsafe {
             let gl_format: ImageFormatGL = data.format.to_gl();
 
-            gl::TextureStorage2D(new.handle.get(), Texture::mip_levels(new.size) as i32,
-                gl_format.internal_format, new.size.x as i32, new.size.y as i32);
-            gl::TextureSubImage2D(new.handle.get(), 0, 0, 0, new.size.x as i32, new.size.y as i32,
-                gl_format.format, gl_format.component_type, data.data.as_ptr() as *const std::ffi::c_void);
+            gl::TextureStorage2D(
+                new.handle.get(),
+                Texture::mip_levels(new.size) as i32,
+                gl_format.internal_format,
+                new.size.x as i32,
+                new.size.y as i32,
+            );
+            gl::TextureSubImage2D(
+                new.handle.get(),
+                0,
+                0,
+                0,
+                new.size.x as i32,
+                new.size.y as i32,
+                gl_format.format,
+                gl_format.component_type,
+                data.data.as_ptr() as *const std::ffi::c_void,
+            );
             gl::GenerateTextureMipmap(new.handle.get());
         };
 
         new
     }
 
-    pub fn new_from_format(size: &glm::UVec2, format : &ImageFormat) -> Self {
+    pub fn new_from_format(size: &glm::UVec2, format: &ImageFormat) -> Self {
         let new = Self {
             handle: create_handle(),
             size: *size,
@@ -127,7 +151,13 @@ impl Texture {
 
         unsafe {
             let gl_format: ImageFormatGL = format.to_gl();
-            gl::TextureStorage2D(new.handle.get(), 1, gl_format.internal_format, new.size.x as i32, new.size.y as i32);
+            gl::TextureStorage2D(
+                new.handle.get(),
+                1,
+                gl_format.internal_format,
+                new.size.x as i32,
+                new.size.y as i32,
+            );
         };
 
         new
