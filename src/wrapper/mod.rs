@@ -1,4 +1,5 @@
 pub mod buffer;
+pub mod camera;
 pub mod handle;
 pub mod hash;
 pub mod material;

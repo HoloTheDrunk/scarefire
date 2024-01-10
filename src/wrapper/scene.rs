@@ -1,4 +1,4 @@
-use crate::{material::Material, mesh::StaticMesh};
+use crate::{camera::Camera, material::Material, mesh::StaticMesh};
 
 use std::rc::Rc;
 
@@ -49,4 +49,11 @@ impl SceneObject {
     }
 }
 
-struct Scene {}
+struct Scene {
+    objects: Vec<SceneObject>,
+    // point_ligts: Vec<PointLight>,
+    sun_direction: glm::Vec3,
+    sun_color: glm::Vec3,
+
+    camera: Camera,
+}
