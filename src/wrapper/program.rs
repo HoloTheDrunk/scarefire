@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 
 use crate::{handle::GLHandle, hash::str_hash};
+use glm::Vector2;
 use paste::paste;
 
 struct UniformLocationInfo {
@@ -21,15 +22,32 @@ impl PartialOrd for UniformLocationInfo {
 }
 
 macro_rules! set_uniform {
-    ($($typename: path as $fnc_name: ident => $expr: expr),+$(,)?) => {
-        $(paste! {
+    () => {};
+
+    (@inner $self:ident, $name_hash:ident, $value:ident, $expr:expr) => {
+        if let Some(loc) = $self.find_location($name_hash) {
+            $expr($self.handle.get(), $value, loc as i32);
+        }
+    };
+
+    ($typename: path as $fnc_name: ident => $expr: expr $(, $($tail:tt)*)?) => {
+        paste! {
             pub fn [<set_uniform_ $fnc_name>](&self, name_hash: u32, value: $typename) {
-                let loc = self.find_location(name_hash);
-                if let Some(loc) = loc {
-                    $expr(self, value, loc as i32);
-                }
+                set_uniform!(@inner self, name_hash, value, $expr);
             }
-        })+
+
+            $(set_uniform!($($tail)*);)?
+        }
+    };
+
+    (&$typename: path as $fnc_name: ident => $expr: expr $(, $($tail:tt)*)?) => {
+        paste! {
+            pub fn [<set_uniform_ $fnc_name>](&self, name_hash: u32, value: &$typename) {
+                set_uniform!(@inner self, name_hash, value, $expr);
+            }
+
+            $(set_uniform!($($tail)*);)?
+        }
     };
 }
 
@@ -86,36 +104,39 @@ impl Program {
     }
 
     set_uniform! {
-        u32 as u32 => |program: &Program, value, loc| unsafe {
-            gl::ProgramUniform1ui(program.handle.get(), loc, value);
+        u32 as u32 => |handle, value, loc| unsafe {
+            gl::ProgramUniform1ui(handle, loc, value);
         },
 
-        f32 as f32 => |program: &Program, value, loc| unsafe {
-            gl::ProgramUniform1f(program.handle.get(), loc, value);
+        f32 as f32 => |handle, value, loc| unsafe {
+            gl::ProgramUniform1f(handle, loc, value);
         },
 
-        glm::Vec2 as vec2 => |program: &Program, value: glm::Vec2, loc| unsafe {
-            gl::ProgramUniform2f(program.handle.get(), loc, value.x, value.y);
+        glm::Vec2 as vec2 => |handle, value: glm::Vec2, loc| unsafe {
+            gl::ProgramUniform2f(handle, loc, value.x, value.y);
         },
 
-        glm::Vec3 as vec3 => |program: &Program, value: glm::Vec3, loc| unsafe {
-            gl::ProgramUniform3f(program.handle.get(), loc, value.x, value.y, value.z);
+        glm::Vec3 as vec3 => |handle, value: glm::Vec3, loc| unsafe {
+            gl::ProgramUniform3f(handle, loc, value.x, value.y, value.z);
         },
 
-        glm::Vec4 as vec4 => |program: &Program, value: glm::Vec4, loc| unsafe {
-            gl::ProgramUniform4f(program.handle.get(), loc, value.x, value.y, value.z, value.w);
+        glm::Vec4 as vec4 => |handle, value: glm::Vec4, loc| unsafe {
+            gl::ProgramUniform4f(handle, loc, value.x, value.y, value.z, value.w);
         },
 
-        // FIXME: does not work lol
-        // glm::Mat2 as mat2 => |program: &Program, value: glm::Mat2, loc| unsafe {
-        //     gl::ProgramUniformMatrix2fv(program.handle.get(), loc, 1, false, &value);
-        // },
+        // FIXME: Figure out how to pass matrix uniforms
+        &glm::Mat2 as mat2 => |handle, value: &glm::Mat2, loc| unsafe {
+            // gl::ProgramUniformMatrix2fv(handle, loc, 1, gl::FALSE, value.as_array().as_ptr());
+            todo!();
+        },
 
-        // glm::Mat3 as mat3 => |program: &Program, value: glm::Vec3, loc| unsafe {
-        // },
+        &glm::Mat3 as mat3 => |handle, value: &glm::Mat3, loc| unsafe {
+            todo!();
+        },
 
-        // glm::Mat4 as mat4 =>|program: &Program, value: glm::Vec3, loc| unsafe {
-        // },
+        &glm::Mat4 as mat4 => |handle, value: &glm::Mat4, loc| unsafe {
+            todo!();
+        },
     }
 
     fn find_location(&self, hash: u32) -> Option<u32> {
