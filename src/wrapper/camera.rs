@@ -36,6 +36,7 @@ impl Camera {
                 glm::vec3(0., 0., 0.),
                 glm::vec3(0., 1., 0.),
             ),
+
             view_proj: glm::Mat4::from_array(&[Vector4::from_array(&[0.; 4]).to_owned(); 4])
                 .to_owned(),
         }
@@ -55,8 +56,20 @@ impl Camera {
         self.update();
     }
 
+    fn extract_ratio(projection: &glm::Mat4) -> f32 {
+        let f: f32 = projection[1][1];
+        (1.0 / (projection[0][0] / f)).abs()
+    }
+
+    fn extract_near(projection: &glm::Mat4) -> f32 {
+        projection[3][2]
+    }
+
     pub fn set_fov(&mut self, fov: f32) {
-        // self.set_proj(Camera::perspective:);
-        todo!()
+        self.set_proj(&Camera::perspective(
+            fov,
+            Camera::extract_ratio(&self.projection),
+            Camera::extract_near(&self.projection),
+        ));
     }
 }
