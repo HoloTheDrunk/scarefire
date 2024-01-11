@@ -1,6 +1,8 @@
 use crate::{camera::Camera, material::Material, mesh::StaticMesh};
 
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
+
+use weak_table::PtrWeakKeyHashMap as WeakMap;
 
 pub struct TransformComponents {
     // ==== Regular ones
@@ -49,11 +51,48 @@ impl SceneObject {
     }
 }
 
-struct Scene {
-    objects: Vec<SceneObject>,
-    // point_ligts: Vec<PointLight>,
-    sun_direction: glm::Vec3,
-    sun_color: glm::Vec3,
+struct ObjectStorage {
+    inner: WeakMap<Weak<Material>, WeakMap<Weak<StaticMesh>, Vec<SceneObject>>>,
+}
 
-    camera: Camera,
+impl ObjectStorage {
+    fn insert(&mut self, object: SceneObject) {
+        self.inner
+            .entry(object.material.clone())
+            .or_insert_with(WeakMap::new)
+            .entry(object.mesh.clone())
+            .or_insert_with(Vec::new)
+            .push(object);
+    }
+
+    fn iter_groups(&self) -> impl Iterator<Item = &Vec<SceneObject>> {
+        self.inner.values().flat_map(|map| map.values())
+    }
+
+    fn len(&self) -> usize {
+        self.inner
+            .values()
+            .flat_map(WeakMap::values)
+            .fold(0, |acc, vec| acc + vec.len())
+    }
+}
+
+pub struct Scene {
+    // point_ligts: Vec<PointLight>,
+    objects: ObjectStorage,
+
+    pub sun_direction: glm::Vec3,
+    pub sun_color: glm::Vec3,
+
+    pub camera: Camera,
+}
+
+impl Scene {
+    pub fn add_object(&mut self, object: SceneObject) {
+        self.objects.insert(object);
+    }
+
+    pub fn render(&self) {
+        todo!()
+    }
 }
