@@ -48,7 +48,6 @@ impl Camera {
     pub fn new() -> Self {
         Self {
             projection: Camera::perspective(60f32.to_radians(), 16. / 9., 1e-3),
-            // TODO: implement lookAt in glm-rs fork
             view: glm::ext::look_at(
                 glm::vec3(2., 2., 2.),
                 glm::vec3(0., 0., 0.),
@@ -99,7 +98,7 @@ impl Camera {
         }
     }
 
-    pub fn set_ratio(&self, ratio: f32) {
+    pub fn set_ratio(&mut self, ratio: f32) {
         self.set_proj(&Camera::perspective(
             self.fov(),
             ratio,
@@ -124,7 +123,7 @@ impl Camera {
         let camera_right = self.right();
         let camera_forward = self.forward();
 
-        let mut frustum: Frustum;
+        let mut frustum: Frustum = Frustum::default();
         let half_fov = self.fov() * 0.5;
         let half_fov_v = half_fov.tan() * self.ratio();
 
