@@ -9,24 +9,6 @@ pub struct Frustum {
     left_normal: glm::Vec3,
 }
 
-impl Frustum {
-    pub fn new() -> Self {
-        Self {
-            near_normal: glm::vec3(0.0, 0.0, 0.0),
-            top_normal: glm::vec3(0.0, 0.0, 0.0),
-            bottom_normal: glm::vec3(0.0, 0.0, 0.0),
-            right_normal: glm::vec3(0.0, 0.0, 0.0),
-            left_normal: glm::vec3(0.0, 0.0, 0.0),
-        }
-    }
-}
-
-impl Default for Frustum {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 pub struct Camera {
     projection: glm::Mat4,
     view: glm::Mat4,
@@ -123,15 +105,18 @@ impl Camera {
         let camera_right = self.right();
         let camera_forward = self.forward();
 
-        let mut frustum: Frustum = Frustum::default();
         let half_fov = self.fov() * 0.5;
-        let half_fov_v = half_fov.tan() * self.ratio();
+        let half_fov_v = (half_fov.tan() * self.ratio()).atan();
 
-        frustum.bottom_normal = camera_forward * half_fov.sin();
-        frustum.top_normal = camera_forward * half_fov.sin() - camera_up * half_fov.cos();
-        frustum.left_normal = camera_forward * half_fov_v.sin() + camera_right * half_fov_v.cos();
-        frustum.right_normal = camera_forward * half_fov_v.sin() - camera_right * half_fov_v.cos();
+        let (c, s) = (half_fov.cos(), half_fov.sin());
+        let (c_v, s_v) = (half_fov_v.cos(), half_fov_v.sin());
 
-        frustum
+        Frustum {
+            near_normal: camera_forward,
+            top_normal: camera_forward * s - camera_up * c,
+            bottom_normal: camera_forward * s + camera_up * c,
+            right_normal: camera_forward * s_v - camera_right * c_v,
+            left_normal: camera_forward * s_v + camera_right * c_v,
+        }
     }
 }
