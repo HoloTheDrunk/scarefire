@@ -9,6 +9,24 @@ pub struct Frustum {
     left_normal: glm::Vec3,
 }
 
+impl Frustum {
+    pub fn new() -> Self {
+        Self {
+            near_normal: glm::vec3(0.0, 0.0, 0.0),
+            top_normal: glm::vec3(0.0, 0.0, 0.0),
+            bottom_normal: glm::vec3(0.0, 0.0, 0.0),
+            right_normal: glm::vec3(0.0, 0.0, 0.0),
+            left_normal: glm::vec3(0.0, 0.0, 0.0),
+        }
+    }
+}
+
+impl Default for Frustum {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct Camera {
     projection: glm::Mat4,
     view: glm::Mat4,
@@ -56,9 +74,9 @@ impl Camera {
         self.update();
     }
 
-    fn extract_ratio(projection: &glm::Mat4) -> f32 {
-        let f: f32 = projection[1][1];
-        (1.0 / (projection[0][0] / f)).abs()
+    fn ratio(&self) -> f32 {
+        let f: f32 = self.projection[1][1];
+        (1.0 / (self.projection[0][0] / f)).abs()
     }
 
     fn extract_near(projection: &glm::Mat4) -> f32 {
@@ -68,7 +86,7 @@ impl Camera {
     pub fn set_fov(&mut self, fov: f32) {
         self.set_proj(&Camera::perspective(
             fov,
-            Camera::extract_ratio(&self.projection),
+            self.ratio(),
             Camera::extract_near(&self.projection),
         ));
     }
@@ -83,9 +101,38 @@ impl Camera {
 
     pub fn set_ratio(&self, ratio: f32) {
         self.set_proj(&Camera::perspective(
-            Camera::fov(self),
+            self.fov(),
             ratio,
             Camera::extract_near(&self.projection),
         ))
+    }
+
+    fn forward(&self) -> glm::Vec3 {
+        -glm::normalize(glm::vec3(self.view[0][2], self.view[1][2], self.view[2][2]))
+    }
+
+    fn right(&self) -> glm::Vec3 {
+        glm::normalize(glm::vec3(self.view[0][0], self.view[1][0], self.view[2][0]))
+    }
+
+    fn up(&self) -> glm::Vec3 {
+        glm::normalize(glm::vec3(self.view[0][1], self.view[1][1], self.view[2][1]))
+    }
+
+    pub fn build_frustum(&self) -> Frustum {
+        let camera_up = self.up();
+        let camera_right = self.right();
+        let camera_forward = self.forward();
+
+        let mut frustum: Frustum;
+        let half_fov = self.fov() * 0.5;
+        let half_fov_v = half_fov.tan() * self.ratio();
+
+        frustum.bottom_normal = camera_forward * half_fov.sin();
+        frustum.top_normal = camera_forward * half_fov.sin() - camera_up * half_fov.cos();
+        frustum.left_normal = camera_forward * half_fov_v.sin() + camera_right * half_fov_v.cos();
+        frustum.right_normal = camera_forward * half_fov_v.sin() - camera_right * half_fov_v.cos();
+
+        frustum
     }
 }
