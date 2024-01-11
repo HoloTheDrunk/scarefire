@@ -72,4 +72,20 @@ impl Camera {
             Camera::extract_near(&self.projection),
         ));
     }
+
+    fn fov(&self) -> f32 {
+        if (self.projection[3][3] == 1.0) {
+            0.0
+        } else {
+            2.0 * (1.0 / self.projection[1][1]).atan()
+        }
+    }
+
+    pub fn set_ratio(&self, ratio: f32) {
+        self.set_proj(&Camera::perspective(
+            Camera::fov(self),
+            ratio,
+            Camera::extract_near(&self.projection),
+        ))
+    }
 }
