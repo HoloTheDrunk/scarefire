@@ -10,9 +10,9 @@ pub struct Frustum {
 }
 
 pub struct Camera {
-    projection: glm::Mat4,
-    view: glm::Mat4,
-    view_proj: glm::Mat4,
+    pub projection: glm::Mat4,
+    pub view: glm::Mat4,
+    pub view_proj: glm::Mat4,
 }
 
 impl Camera {
@@ -41,7 +41,7 @@ impl Camera {
         }
     }
 
-    pub fn update(&mut self) {
+    fn update(&mut self) {
         self.view_proj = self.projection * self.view;
     }
 
@@ -55,29 +55,12 @@ impl Camera {
         self.update();
     }
 
-    fn ratio(&self) -> f32 {
-        let f: f32 = self.projection[1][1];
-        (1.0 / (self.projection[0][0] / f)).abs()
-    }
-
-    fn extract_near(projection: &glm::Mat4) -> f32 {
-        projection[3][2]
-    }
-
     pub fn set_fov(&mut self, fov: f32) {
         self.set_proj(&Camera::perspective(
             fov,
             self.ratio(),
             Camera::extract_near(&self.projection),
         ));
-    }
-
-    fn fov(&self) -> f32 {
-        if (self.projection[3][3] == 1.0) {
-            0.0
-        } else {
-            2.0 * (1.0 / self.projection[1][1]).atan()
-        }
     }
 
     pub fn set_ratio(&mut self, ratio: f32) {
@@ -88,16 +71,46 @@ impl Camera {
         ))
     }
 
-    fn forward(&self) -> glm::Vec3 {
+    fn extract_near(projection: &glm::Mat4) -> f32 {
+        projection[3][2]
+    }
+
+    pub fn fov(&self) -> f32 {
+        if (self.is_orthographic()) {
+            0.0
+        } else {
+            2.0 * (1.0 / self.projection[1][1]).atan()
+        }
+    }
+
+    pub fn ratio(&self) -> f32 {
+        let f: f32 = self.projection[1][1];
+        (1.0 / (self.projection[0][0] / f)).abs()
+    }
+
+    pub fn position(&self) -> glm::Vec3 {
+        let mut pos = glm::vec3(0., 0., 0.);
+        for i in 0..3 {
+            pos = pos
+                - glm::vec3(self.view[0][i], self.view[1][i], self.view[2][i]) * self.view[3][i];
+        }
+        pos
+    }
+
+    pub fn forward(&self) -> glm::Vec3 {
         -glm::normalize(glm::vec3(self.view[0][2], self.view[1][2], self.view[2][2]))
     }
 
-    fn right(&self) -> glm::Vec3 {
+    pub fn right(&self) -> glm::Vec3 {
         glm::normalize(glm::vec3(self.view[0][0], self.view[1][0], self.view[2][0]))
     }
 
-    fn up(&self) -> glm::Vec3 {
+    pub fn up(&self) -> glm::Vec3 {
         glm::normalize(glm::vec3(self.view[0][1], self.view[1][1], self.view[2][1]))
+    }
+
+    pub fn is_orthographic(&self) -> bool {
+        self.projection[3][3] == 1.
     }
 
     pub fn build_frustum(&self) -> Frustum {
