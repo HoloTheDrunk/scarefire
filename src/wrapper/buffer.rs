@@ -15,7 +15,7 @@ pub struct GLBuffer<T> {
 }
 
 impl<T> GLBuffer<T> {
-    pub fn new(data: impl Iterator<Item = T>) -> Self {
+    pub fn new(data: &[u8]) -> Self {
         fn create_buffer_handle() -> GLHandle {
             let handle: GLuint = 0;
             unsafe {
@@ -25,8 +25,6 @@ impl<T> GLBuffer<T> {
         }
 
         let handle = create_buffer_handle();
-
-        let data = data.collect::<Vec<_>>();
         let size = data.len();
 
         unsafe {

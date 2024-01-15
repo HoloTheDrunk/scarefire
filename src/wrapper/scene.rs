@@ -1,4 +1,6 @@
-use crate::{camera::Camera, material::Material, mesh::StaticMesh};
+use crate::{buffer::GLBuffer, camera::Camera, material::Material, mesh::StaticMesh};
+
+use glrs::import;
 
 use std::rc::{Rc, Weak};
 
@@ -76,12 +78,26 @@ pub struct Scene {
     pub camera: Camera,
 }
 
+#[glrs::import(path = "shaders/structs.glsl")]
+#[derive(Default)]
+struct FrameData;
+
+#[glrs::import(path = "shaders/structs.glsl")]
+struct PointLight;
+
 impl Scene {
     pub fn add_object(&mut self, object: SceneObject) {
         self.objects.insert(object);
     }
 
     pub fn render(&self) {
-        todo!()
+        let frame_data = FrameData {
+            view_proj: self.camera.view_proj,
+            sun_dir: self.sun_direction.normalize(),
+            point_light_count: 0,
+            sun_color: self.sun_color,
+            ..Default::default()
+        };
+        todo!();
     }
 }

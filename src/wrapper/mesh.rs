@@ -106,22 +106,27 @@ pub struct StaticMesh {
     bounding_sphere: BoundingSphere,
 }
 
+unsafe fn any_as_u8_slice<T: Sized>(p: &[T]) -> &[u8] {
+    ::core::slice::from_raw_parts((p.as_ptr()) as *const u8, ::core::mem::size_of::<T>())
+}
+
 impl StaticMesh {
-    pub fn new(vertices: impl Iterator<Item = Vertex>, indices: impl Iterator<Item = u32>) -> Self {
-        let vertices = vertices.collect::<Vec<_>>();
+    pub fn new(vertices: &[Vertex], indices: &[u32]) -> Self {
         let bounds = Bounds::new(vertices.iter().map(|v| v.position));
         let center = bounds.get_center();
 
-        Self {
-            vertex_buffer: GLBuffer::new(vertices.into_iter()),
-            index_buffer: GLBuffer::new(indices.into_iter()),
-            bounding_sphere: BoundingSphere {
-                center,
-                radius: bounds
-                    .get_min()
-                    .distance(center)
-                    .max(bounds.get_max().distance(center)),
-            },
+        unsafe {
+            Self {
+                vertex_buffer: GLBuffer::new(any_as_u8_slice(vertices)),
+                index_buffer: GLBuffer::new(any_as_u8_slice(indices)),
+                bounding_sphere: BoundingSphere {
+                    center,
+                    radius: bounds
+                        .get_min()
+                        .distance(center)
+                        .max(bounds.get_max().distance(center)),
+                },
+            }
         }
     }
 
