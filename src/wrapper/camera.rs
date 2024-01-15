@@ -1,43 +1,50 @@
-use glm::Vector4;
+use glam::Vec4;
 
 pub struct Frustum {
-    near_normal: glm::Vec3,
+    near_normal: glam::Vec3,
     // No far plane (zFar is +inf)
-    top_normal: glm::Vec3,
-    bottom_normal: glm::Vec3,
-    right_normal: glm::Vec3,
-    left_normal: glm::Vec3,
+    top_normal: glam::Vec3,
+    bottom_normal: glam::Vec3,
+    right_normal: glam::Vec3,
+    left_normal: glam::Vec3,
 }
 
 pub struct Camera {
-    pub projection: glm::Mat4,
-    pub view: glm::Mat4,
-    pub view_proj: glm::Mat4,
+    pub projection: glam::Mat4,
+    pub view: glam::Mat4,
+    pub view_proj: glam::Mat4,
+}
+
+macro_rules! get {
+    ($($mat: ident).*, $x: expr, $y: expr) => {
+       $($mat).*.col($x)[$y]
+    };
 }
 
 impl Camera {
     #[rustfmt::skip]
-    pub fn perspective(fov_y: f32, ratio: f32, z_near: f32) -> glm::Mat4 {
+    pub fn perspective(fov_y: f32, ratio: f32, z_near: f32) -> glam::Mat4 {
         let f = 1. / (fov_y / 2.).tan();
-        glm::mat4(
-            f / ratio, 0.,   0.  ,  0.,
-                0.   , f ,   0.  ,  0.,
-                0.   , 0.,   0.  , -1.,
-                0.   , 0., z_near,  0.,
+        glam::Mat4::from_cols_array(
+            &[
+                f / ratio, 0.,   0.  ,  0.,
+                0.       , f ,   0.  ,  0.,
+                0.       , 0.,   0.  , -1.,
+                0.       , 0., z_near,  0.
+            ]
         )
     }
 
     pub fn new() -> Self {
         Self {
             projection: Camera::perspective(60f32.to_radians(), 16. / 9., 1e-3),
-            view: glm::ext::look_at(
-                glm::vec3(2., 2., 2.),
-                glm::vec3(0., 0., 0.),
-                glm::vec3(0., 1., 0.),
+            view: glam::f32::Mat4::look_at_rh(
+                glam::vec3(2., 2., 2.),
+                glam::vec3(0., 0., 0.),
+                glam::vec3(0., 1., 0.),
             ),
 
-            view_proj: glm::Mat4::from_array(&[Vector4::from_array(&[0.; 4]).to_owned(); 4])
-                .to_owned(),
+            view_proj: glam::Mat4::from_cols_array(&[0.; 16]).to_owned(),
         }
     }
 
@@ -45,12 +52,12 @@ impl Camera {
         self.view_proj = self.projection * self.view;
     }
 
-    pub fn set_view(&mut self, matrix: &glm::Mat4) {
+    pub fn set_view(&mut self, matrix: &glam::Mat4) {
         self.view = *matrix;
         self.update();
     }
 
-    pub fn set_proj(&mut self, matrix: &glm::Mat4) {
+    pub fn set_proj(&mut self, matrix: &glam::Mat4) {
         self.projection = *matrix;
         self.update();
     }
@@ -71,46 +78,65 @@ impl Camera {
         ))
     }
 
-    fn extract_near(projection: &glm::Mat4) -> f32 {
-        projection[3][2]
+    fn extract_near(projection: &glam::Mat4) -> f32 {
+        get!(projection, 3, 2)
     }
 
     pub fn fov(&self) -> f32 {
         if (self.is_orthographic()) {
             0.0
         } else {
-            2.0 * (1.0 / self.projection[1][1]).atan()
+            2.0 * (1.0 / get!(self.projection, 1, 1)).atan()
         }
     }
 
     pub fn ratio(&self) -> f32 {
-        let f: f32 = self.projection[1][1];
-        (1.0 / (self.projection[0][0] / f)).abs()
+        let f: f32 = get!(self.projection, 1, 1);
+        (1.0 / (get!(self.projection, 0, 0)) / f).abs()
     }
 
-    pub fn position(&self) -> glm::Vec3 {
-        let mut pos = glm::vec3(0., 0., 0.);
+    pub fn position(&self) -> glam::Vec3 {
+        let mut pos = glam::vec3(0., 0., 0.);
         for i in 0..3 {
             pos = pos
-                - glm::vec3(self.view[0][i], self.view[1][i], self.view[2][i]) * self.view[3][i];
+                - glam::vec3(
+                    get!(self.view, 0, i),
+                    get!(self.view, 1, i),
+                    get!(self.view, 2, i),
+                ) * get!(self.view, 3, i);
         }
         pos
     }
 
-    pub fn forward(&self) -> glm::Vec3 {
-        -glm::normalize(glm::vec3(self.view[0][2], self.view[1][2], self.view[2][2]))
+    pub fn forward(&self) -> glam::Vec3 {
+        -glam::vec3(
+            get!(self.view, 0, 2),
+            get!(self.view, 1, 2),
+            get!(self.view, 2, 2),
+        )
+        .normalize()
     }
 
-    pub fn right(&self) -> glm::Vec3 {
-        glm::normalize(glm::vec3(self.view[0][0], self.view[1][0], self.view[2][0]))
+    pub fn right(&self) -> glam::Vec3 {
+        glam::vec3(
+            get!(self.view, 0, 0),
+            get!(self.view, 1, 0),
+            get!(self.view, 2, 0),
+        )
+        .normalize()
     }
 
-    pub fn up(&self) -> glm::Vec3 {
-        glm::normalize(glm::vec3(self.view[0][1], self.view[1][1], self.view[2][1]))
+    pub fn up(&self) -> glam::Vec3 {
+        glam::vec3(
+            get!(self.view, 0, 1),
+            get!(self.view, 1, 1),
+            get!(self.view, 2, 1),
+        )
+        .normalize()
     }
 
     pub fn is_orthographic(&self) -> bool {
-        self.projection[3][3] == 1.
+        get!(self.projection, 3, 3) == 1.
     }
 
     pub fn build_frustum(&self) -> Frustum {

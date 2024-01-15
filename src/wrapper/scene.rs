@@ -5,19 +5,13 @@ use std::rc::{Rc, Weak};
 use weak_table::PtrWeakKeyHashMap as WeakMap;
 
 pub struct TransformComponents {
-    // ==== Regular ones
-    position: glm::Vec3,
-    // TODO: PR glm-rs with quat impl
-    rotation: glm::Vec4,
-    scale: glm::Vec3,
-
-    // ==== Funky ones
-    skew: glm::Vec3,
-    perspective: glm::Vec4,
+    position: glam::Vec3,
+    rotation: glam::Quat,
+    scale: glam::Vec3,
 }
 
 pub struct SceneObject {
-    pub transform: glm::Mat4,
+    pub transform: glam::Mat4,
     mesh: Rc<StaticMesh>,
     material: Rc<Material>,
 }
@@ -36,17 +30,12 @@ impl SceneObject {
     }
 
     pub fn get_transform_components(&self) -> TransformComponents {
-        let (scale, rotation, position, skew, perspective) = self
-            .transform
-            .decompose()
-            .expect("Failed to decompose mat4");
+        let (scale, rotation, position) = self.transform.to_scale_rotation_translation();
 
         TransformComponents {
             position,
             rotation,
             scale,
-            skew,
-            perspective,
         }
     }
 }
@@ -81,8 +70,8 @@ pub struct Scene {
     // point_ligts: Vec<PointLight>,
     objects: ObjectStorage,
 
-    pub sun_direction: glm::Vec3,
-    pub sun_color: glm::Vec3,
+    pub sun_direction: glam::Vec3,
+    pub sun_color: glam::Vec3,
 
     pub camera: Camera,
 }

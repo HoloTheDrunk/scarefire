@@ -2,10 +2,7 @@ use stb_image::stb_image::stbi_load;
 
 use crate::handle::{AccessType, GLHandle};
 
-use {
-    gl::types::{GLenum, GLuint},
-    glm::GenNumVec,
-};
+use gl::types::{GLenum, GLuint};
 
 #[derive(Clone, Copy)]
 pub enum ImageFormat {
@@ -56,7 +53,7 @@ impl From<ImageFormat> for ImageFormatGL {
 
 pub struct TextureData {
     data: Vec<u8>,
-    size: glm::UVec2,
+    size: glam::UVec2,
     format: ImageFormat,
 }
 
@@ -86,7 +83,7 @@ impl TextureData {
 
         Some(TextureData {
             data: bytes,
-            size: glm::uvec2(width as u32, height as u32),
+            size: glam::uvec2(width as u32, height as u32),
             format: ImageFormat::Rgba8Unorm,
         })
     }
@@ -94,7 +91,7 @@ impl TextureData {
 
 pub struct Texture {
     handle: GLHandle,
-    size: glm::UVec2,
+    size: glam::UVec2,
     format: ImageFormat,
 }
 
@@ -142,7 +139,7 @@ impl Texture {
         new
     }
 
-    pub fn new_from_format(size: &glm::UVec2, format: &ImageFormat) -> Self {
+    pub fn new_from_format(size: &glam::UVec2, format: &ImageFormat) -> Self {
         let new = Self {
             handle: create_handle(),
             size: *size,
@@ -183,13 +180,13 @@ impl Texture {
         }
     }
 
-    pub fn size(&self) -> &glm::UVec2 {
+    pub fn size(&self) -> &glam::UVec2 {
         &self.size
     }
 
     /// Return number of mip levels needed.
-    pub fn mip_levels(size: glm::UVec2) -> u32 {
-        let side = size.max() as f32;
+    pub fn mip_levels(size: glam::UVec2) -> u32 {
+        let side = size.max_element() as f32;
         1 + side.log2().floor() as u32
     }
 }

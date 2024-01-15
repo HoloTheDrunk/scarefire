@@ -2,17 +2,17 @@ use super::{buffer::GLBuffer, handle::BufferUsage};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vertex {
-    pub position: glm::Vec3,
-    pub normal: glm::Vec3,
-    pub color: glm::Vec3,
+    pub position: glam::Vec3,
+    pub normal: glam::Vec3,
+    pub color: glam::Vec3,
 }
 
 impl Default for Vertex {
     fn default() -> Self {
         Self {
-            position: glm::vec3(0., 0., 0.),
-            normal: glm::vec3(0., 1., 0.),
-            color: glm::vec3(1., 1., 1.),
+            position: glam::vec3(0., 0., 0.),
+            normal: glam::vec3(0., 1., 0.),
+            color: glam::vec3(1., 1., 1.),
         }
     }
 }
@@ -48,7 +48,7 @@ struct Bounds {
 }
 
 impl Bounds {
-    pub fn new(mut vertices: impl Iterator<Item = glm::Vec3>) -> Self {
+    pub fn new(mut vertices: impl Iterator<Item = glam::Vec3>) -> Self {
         let first = vertices
             .next()
             .expect("Cannot create bounds from empty vertices vector");
@@ -62,31 +62,31 @@ impl Bounds {
         res
     }
 
-    pub fn stretch_to(&mut self, pos: glm::Vec3) {
+    pub fn stretch_to(&mut self, pos: glam::Vec3) {
         self.x.stretch_to(pos.x);
         self.y.stretch_to(pos.y);
         self.z.stretch_to(pos.z);
     }
 
-    pub fn get_center(&self) -> glm::Vec3 {
-        glm::Vec3 {
+    pub fn get_center(&self) -> glam::Vec3 {
+        glam::Vec3 {
             x: (self.x.min + self.x.max) / 2.,
             y: (self.y.min + self.y.max) / 2.,
             z: (self.z.min + self.z.max) / 2.,
         }
     }
 
-    pub fn get_min(&self) -> glm::Vec3 {
-        glm::vec3(self.x.min, self.y.min, self.z.min)
+    pub fn get_min(&self) -> glam::Vec3 {
+        glam::vec3(self.x.min, self.y.min, self.z.min)
     }
 
-    pub fn get_max(&self) -> glm::Vec3 {
-        glm::vec3(self.x.max, self.y.max, self.z.max)
+    pub fn get_max(&self) -> glam::Vec3 {
+        glam::vec3(self.x.max, self.y.max, self.z.max)
     }
 }
 
-impl From<glm::Vec3> for Bounds {
-    fn from(value: glm::Vec3) -> Self {
+impl From<glam::Vec3> for Bounds {
+    fn from(value: glam::Vec3) -> Self {
         Self {
             x: Range::from(value.x),
             y: Range::from(value.y),
@@ -96,7 +96,7 @@ impl From<glm::Vec3> for Bounds {
 }
 
 pub struct BoundingSphere {
-    pub center: glm::Vec3,
+    pub center: glam::Vec3,
     pub radius: f32,
 }
 
@@ -117,8 +117,10 @@ impl StaticMesh {
             index_buffer: GLBuffer::new(indices.into_iter()),
             bounding_sphere: BoundingSphere {
                 center,
-                radius: glm::distance(bounds.get_min(), center)
-                    .max(glm::distance(bounds.get_max(), center)),
+                radius: bounds
+                    .get_min()
+                    .distance(center)
+                    .max(bounds.get_max().distance(center)),
             },
         }
     }

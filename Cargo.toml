@@ -7,8 +7,9 @@ edition = "2021"
 
 [dependencies]
 gl = "0.14.0"
+glam = "0.25.0"
 glfw = "0.54.0"
-glm = { git = "https://github.com/HoloTheDrunk/glm-rs" }
+glrs = "0.1.0"
 paste = "1.0.14"
 stb_image = "0.3.0"
 weak-table = "0.3.2"

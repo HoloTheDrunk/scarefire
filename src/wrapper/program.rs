@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 
 use crate::{handle::GLHandle, hash::str_hash};
-use glm::Vector2;
+use glam::Vec2;
 use paste::paste;
 
 struct UniformLocationInfo {
@@ -146,28 +146,28 @@ impl Program {
             gl::ProgramUniform1f(handle, loc, value);
         },
 
-        glm::Vec2 as vec2 => |handle, value: glm::Vec2, loc| unsafe {
+        glam::Vec2 as vec2 => |handle, value: glam::Vec2, loc| unsafe {
             gl::ProgramUniform2f(handle, loc, value.x, value.y);
         },
 
-        glm::Vec3 as vec3 => |handle, value: glm::Vec3, loc| unsafe {
+        glam::Vec3 as vec3 => |handle, value: glam::Vec3, loc| unsafe {
             gl::ProgramUniform3f(handle, loc, value.x, value.y, value.z);
         },
 
-        glm::Vec4 as vec4 => |handle, value: glm::Vec4, loc| unsafe {
+        glam::Vec4 as vec4 => |handle, value: glam::Vec4, loc| unsafe {
             gl::ProgramUniform4f(handle, loc, value.x, value.y, value.z, value.w);
         },
 
-        &glm::Mat2 as mat2 => |handle, value: &glm::Mat2, loc| unsafe {
-            gl::ProgramUniformMatrix2fv(handle, loc, 1, gl::FALSE, value as *const glm::Mat2 as *const f32);
+        &glam::Mat2 as mat2 => |handle, value: &glam::Mat2, loc| unsafe {
+            gl::ProgramUniformMatrix2fv(handle, loc, 1, gl::FALSE, value as *const glam::Mat2 as *const f32);
         },
 
-        &glm::Mat3 as mat3 => |handle, value: &glm::Mat3, loc| unsafe {
-            gl::ProgramUniformMatrix3fv(handle, loc, 1, gl::FALSE, value as *const glm::Mat3 as *const f32);
+        &glam::Mat3 as mat3 => |handle, value: &glam::Mat3, loc| unsafe {
+            gl::ProgramUniformMatrix3fv(handle, loc, 1, gl::FALSE, value as *const glam::Mat3 as *const f32);
         },
 
-        &glm::Mat4 as mat4 => |handle, value: &glm::Mat4, loc| unsafe {
-            gl::ProgramUniformMatrix4fv(handle, loc, 1, gl::FALSE, value as *const glm::Mat4 as *const f32);
+        &glam::Mat4 as mat4 => |handle, value: &glam::Mat4, loc| unsafe {
+            gl::ProgramUniformMatrix4fv(handle, loc, 1, gl::FALSE, value as *const glam::Mat4 as *const f32);
         },
     }
 
