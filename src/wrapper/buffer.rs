@@ -2,6 +2,8 @@ use std::ffi::c_void;
 
 use gl::types::GLuint;
 
+use crate::AsSlice;
+
 use super::handle::{BufferUsage, GLHandle};
 
 /// Representation for a buffer stored on the GPU.
@@ -15,7 +17,7 @@ pub struct GLBuffer<T> {
 }
 
 impl<T> GLBuffer<T> {
-    pub fn new(data: &[u8]) -> Self {
+    pub fn new(data: &[T]) -> Self {
         fn create_buffer_handle() -> GLHandle {
             let handle: GLuint = 0;
             unsafe {
@@ -24,10 +26,11 @@ impl<T> GLBuffer<T> {
             GLHandle::new(handle)
         }
 
-        let handle = create_buffer_handle();
-        let size = data.len();
-
         unsafe {
+            let data = data.as_u8_slice();
+            let handle = create_buffer_handle();
+            let size = data.len();
+
             gl::NamedBufferData(
                 handle.get(),
                 // Byte size
@@ -35,12 +38,12 @@ impl<T> GLBuffer<T> {
                 data.as_ptr() as *const c_void,
                 gl::STATIC_DRAW,
             );
-        }
 
-        Self {
-            handle,
-            size,
-            r#type: std::marker::PhantomData::<T>,
+            Self {
+                handle,
+                size,
+                r#type: std::marker::PhantomData::<T>,
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-use crate::{buffer::GLBuffer, camera::Camera, material::Material, mesh::StaticMesh};
+use crate::{buffer::GLBuffer, camera::Camera, material::Material, mesh::StaticMesh, AsSlice};
 
 use glrs::import;
 
@@ -91,13 +91,16 @@ impl Scene {
     }
 
     pub fn render(&self) {
-        let frame_data = FrameData {
-            view_proj: self.camera.view_proj,
-            sun_dir: self.sun_direction.normalize(),
-            point_light_count: 0,
-            sun_color: self.sun_color,
-            ..Default::default()
-        };
-        todo!();
+        unsafe {
+            let frame_data = FrameData {
+                view_proj: self.camera.view_proj,
+                sun_dir: self.sun_direction.normalize(),
+                point_light_count: 0,
+                sun_color: self.sun_color,
+                ..Default::default()
+            };
+
+            let buffer = GLBuffer::<FrameData>::new(&[frame_data]);
+        }
     }
 }

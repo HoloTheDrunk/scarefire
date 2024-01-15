@@ -91,3 +91,13 @@ pub unsafe fn init_graphics() -> (Glfw, (PWindow, GlfwReceiver<(f64, WindowEvent
 
     (glfw, (window, events))
 }
+
+pub trait AsSlice {
+    unsafe fn as_u8_slice(&self) -> &[u8];
+}
+
+impl<T: Sized> AsSlice for T {
+    unsafe fn as_u8_slice(&self) -> &[u8] {
+        ::core::slice::from_raw_parts(self as *const T as *const u8, ::core::mem::size_of::<T>())
+    }
+}

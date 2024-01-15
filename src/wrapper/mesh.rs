@@ -1,3 +1,5 @@
+use crate::AsSlice;
+
 use super::{buffer::GLBuffer, handle::BufferUsage};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -106,10 +108,6 @@ pub struct StaticMesh {
     bounding_sphere: BoundingSphere,
 }
 
-unsafe fn any_as_u8_slice<T: Sized>(p: &[T]) -> &[u8] {
-    ::core::slice::from_raw_parts((p.as_ptr()) as *const u8, ::core::mem::size_of::<T>())
-}
-
 impl StaticMesh {
     pub fn new(vertices: &[Vertex], indices: &[u32]) -> Self {
         let bounds = Bounds::new(vertices.iter().map(|v| v.position));
@@ -117,8 +115,8 @@ impl StaticMesh {
 
         unsafe {
             Self {
-                vertex_buffer: GLBuffer::new(any_as_u8_slice(vertices)),
-                index_buffer: GLBuffer::new(any_as_u8_slice(indices)),
+                vertex_buffer: GLBuffer::new(vertices),
+                index_buffer: GLBuffer::new(indices),
                 bounding_sphere: BoundingSphere {
                     center,
                     radius: bounds
