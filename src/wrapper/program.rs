@@ -218,6 +218,12 @@ impl Program {
             uniform_locations
         }
     }
+
+    pub fn bind(&self) {
+        unsafe {
+            gl::UseProgram(self.handle.get());
+        }
+    }
 }
 
 fn load_shader(path: &str, r#type: gl::types::GLenum) -> u32 {

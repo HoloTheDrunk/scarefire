@@ -15,6 +15,18 @@ pub struct Camera {
     pub view_proj: glam::Mat4,
 }
 
+impl Default for Camera {
+    fn default() -> Self {
+        let projection = Self::perspective(70f32.to_radians(), 16. / 9., 1e-3);
+        let view = glam::Mat4::look_to_rh(glam::vec3(2., 2., 2.), glam::Vec3::ZERO, glam::Vec3::Y);
+        Self {
+            projection,
+            view,
+            view_proj: projection * view,
+        }
+    }
+}
+
 macro_rules! get {
     ($($mat: ident).*, $x: expr, $y: expr) => {
        $($mat).*.col($x)[$y]

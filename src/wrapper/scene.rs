@@ -42,7 +42,8 @@ impl SceneObject {
     }
 }
 
-struct ObjectStorage {
+#[derive(Default)]
+pub struct ObjectStorage {
     inner: WeakMap<Weak<Material>, WeakMap<Weak<StaticMesh>, Vec<SceneObject>>>,
 }
 
@@ -56,7 +57,7 @@ impl ObjectStorage {
             .push(object);
     }
 
-    fn iter_groups(&self) -> impl Iterator<Item = &Vec<SceneObject>> {
+    fn iter_material_groups(&self) -> impl Iterator<Item = &Vec<SceneObject>> {
         self.inner.values().flat_map(|map| map.values())
     }
 
@@ -70,12 +71,23 @@ impl ObjectStorage {
 
 pub struct Scene {
     // point_ligts: Vec<PointLight>,
-    objects: ObjectStorage,
+    pub objects: ObjectStorage,
 
     pub sun_direction: glam::Vec3,
     pub sun_color: glam::Vec3,
 
     pub camera: Camera,
+}
+
+impl Default for Scene {
+    fn default() -> Self {
+        Self {
+            objects: Default::default(),
+            sun_direction: glam::vec3(1., 1., 1.),
+            sun_color: glam::vec3(1., 1., 1.),
+            camera: Default::default(),
+        }
+    }
 }
 
 #[glrs::import(path = "shaders/structs.glsl")]
@@ -86,21 +98,34 @@ struct FrameData;
 struct PointLight;
 
 impl Scene {
+    pub fn new(sun_direction: glam::Vec3, sun_color: glam::Vec3, camera: Camera) -> Self {
+        Self {
+            objects: ObjectStorage::default(),
+            sun_direction,
+            sun_color,
+            camera,
+        }
+    }
+
     pub fn add_object(&mut self, object: SceneObject) {
         self.objects.insert(object);
     }
 
     pub fn render(&self) {
-        unsafe {
-            let frame_data = FrameData {
-                view_proj: self.camera.view_proj,
-                sun_dir: self.sun_direction.normalize(),
-                point_light_count: 0,
-                sun_color: self.sun_color,
-                ..Default::default()
-            };
+        let frame_data = FrameData {
+            view_proj: self.camera.view_proj,
+            sun_dir: self.sun_direction.normalize(),
+            sun_color: self.sun_color,
+            ..Default::default()
+        };
+        let buffer = unsafe { GLBuffer::new(&[frame_data]) };
 
-            let buffer = GLBuffer::<FrameData>::new(&[frame_data]);
+        // TODO: Batch rendering
+        for vec in self.objects.iter_material_groups() {
+            vec[0].material().bind();
+            for object in vec.iter() {
+                object.render();
+            }
         }
     }
 }

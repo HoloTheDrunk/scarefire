@@ -3,6 +3,15 @@ mod wrapper;
 
 pub use wrapper::*;
 
+pub mod prelude {
+    pub use super::{
+        wrapper::{
+            buffer::*, camera::*, handle::*, material::*, mesh::*, program::*, scene::*, texture::*,
+        },
+        *,
+    };
+}
+
 use std::{ffi::c_void, ptr::null};
 
 use {

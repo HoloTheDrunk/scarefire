@@ -1,10 +1,20 @@
 use glfw::{Action, Context, Key};
-use scarefire::init_graphics;
+use scarefire::prelude::*;
+
+fn init_scene() -> Scene {
+    let scene = Scene::default();
+
+    // scene.add_object(...);
+
+    scene
+}
 
 fn main() {
     println!("OooOooOOoOOOoo");
 
     let (mut glfw, (mut window, events)) = unsafe { init_graphics() };
+
+    init_scene();
 
     // Loop until the user closes the window
     while !window.should_close() {
