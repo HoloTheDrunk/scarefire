@@ -1,4 +1,6 @@
-use crate::{buffer::GLBuffer, camera::Camera, material::Material, mesh::StaticMesh, AsSlice};
+use crate::{
+    buffer::GLBuffer, camera::Camera, hash, material::Material, mesh::StaticMesh, AsSlice,
+};
 
 use glrs::import;
 
@@ -19,8 +21,21 @@ pub struct SceneObject {
 }
 
 impl SceneObject {
+    pub fn new(mesh: Rc<StaticMesh>, material: Rc<Material>) -> Self {
+        Self {
+            transform: glam::Mat4::default(),
+            mesh,
+            material,
+        }
+    }
+
     fn render(&self) {
-        todo!()
+        self.material
+            .program
+            .set_uniform_mat4(hash::str_hash("model"), &self.transform);
+
+        self.material.bind();
+        self.mesh.draw();
     }
 
     pub fn mesh(&self) -> &Rc<StaticMesh> {
