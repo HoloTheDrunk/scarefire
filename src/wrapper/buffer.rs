@@ -2,7 +2,7 @@ use std::ffi::c_void;
 
 use gl::types::GLuint;
 
-use crate::AsSlice;
+use crate::{prelude::dogl, AsSlice};
 
 use super::handle::{BufferUsage, GLHandle};
 
@@ -19,9 +19,9 @@ pub struct GLBuffer<T> {
 impl<T> GLBuffer<T> {
     pub fn new(data: &[T]) -> Self {
         fn create_buffer_handle() -> GLHandle {
-            let handle: GLuint = 0;
+            let mut handle: GLuint = 0;
             unsafe {
-                gl::CreateBuffers(1, handle as *mut GLuint);
+                dogl!(gl::CreateBuffers(1, &mut handle as *mut GLuint));
             }
             GLHandle::new(handle)
         }
@@ -31,13 +31,13 @@ impl<T> GLBuffer<T> {
             let handle = create_buffer_handle();
             let size = data.len();
 
-            gl::NamedBufferData(
+            dogl!(gl::NamedBufferData(
                 handle.get(),
                 // Byte size
                 (size * std::mem::size_of::<T>()) as isize,
                 data.as_ptr() as *const c_void,
                 gl::STATIC_DRAW,
-            );
+            ));
 
             Self {
                 handle,
@@ -61,7 +61,7 @@ impl<T> GLBuffer<T> {
 
     pub fn bind(&self, usage: BufferUsage) {
         unsafe {
-            gl::BindBuffer(usage.into(), self.handle.get());
+            dogl!(gl::BindBuffer(usage.into(), self.handle.get()));
         }
     }
 
@@ -69,13 +69,15 @@ impl<T> GLBuffer<T> {
         assert!(matches!(usage, BufferUsage::Uniform | BufferUsage::Storage));
 
         unsafe {
-            gl::BindBufferBase(usage.into(), index, self.handle.get());
+            dogl!(gl::BindBufferBase(usage.into(), index, self.handle.get()));
         }
     }
 }
 
 impl<T> Drop for GLBuffer<T> {
     fn drop(&mut self) {
-        unsafe { gl::DeleteBuffers(1, self.handle.get() as *const u32) }
+        unsafe {
+            dogl!(gl::DeleteBuffers(1, self.handle.get() as *const u32));
+        }
     }
 }
