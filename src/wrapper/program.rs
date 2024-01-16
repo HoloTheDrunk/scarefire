@@ -60,11 +60,11 @@ macro_rules! set_uniform {
 }
 
 pub struct ShaderPaths {
-    vertex: String,
-    geometry: Option<String>,
-    tess_control: Option<String>,
-    tess_evaluation: Option<String>,
-    fragment: String,
+    pub vertex: String,
+    pub geometry: Option<String>,
+    pub tess_control: Option<String>,
+    pub tess_evaluation: Option<String>,
+    pub fragment: String,
 }
 
 pub struct Program {

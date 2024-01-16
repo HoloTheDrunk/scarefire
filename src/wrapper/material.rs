@@ -23,6 +23,14 @@ pub struct Material {
 }
 
 impl Material {
+    pub fn new(program: Rc<Program>) -> Self {
+        Self {
+            program,
+            textures: HashMap::new(),
+            blend_mode: BlendMode::None,
+            depth_test_mode: DepthTestMode::Standard,
+        }
+    }
     pub fn set_texture(&mut self, slot: u32, texture: &Rc<Texture>) {
         self.textures
             .entry(slot)
