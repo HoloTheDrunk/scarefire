@@ -94,21 +94,19 @@ pub unsafe fn init_graphics() -> (Glfw, (PWindow, GlfwReceiver<(f64, WindowEvent
         *gl::GetString(gl::SHADING_LANGUAGE_VERSION)
     );
 
-    dogl! {
-        gl::ClearColor(0.5, 0.7, 0.8, 0.);
+    gl::ClearColor(0.5, 0.7, 0.8, 0.);
 
-        gl::DebugMessageCallback(Some(debug_out), null());
-        gl::Enable(gl::DEBUG_OUTPUT);
+    gl::DebugMessageCallback(Some(debug_out), null());
+    gl::Enable(gl::DEBUG_OUTPUT);
 
-        gl::ClipControl(gl::LOWER_LEFT, gl::ZERO_TO_ONE);
-        gl::ClearDepth(0.);
+    gl::ClipControl(gl::LOWER_LEFT, gl::ZERO_TO_ONE);
+    gl::ClearDepth(0.);
 
-        gl::ActiveTexture(gl::TEXTURE0);
-        gl::Enable(gl::FRAMEBUFFER_SRGB);
+    gl::ActiveTexture(gl::TEXTURE0);
+    gl::Enable(gl::FRAMEBUFFER_SRGB);
 
-        gl::GenVertexArrays(1, GLOBAL_VAO as *mut GLuint);
-        gl::BindVertexArray(GLOBAL_VAO);
-    }
+    gl::GenVertexArrays(1, GLOBAL_VAO as *mut GLuint);
+    gl::BindVertexArray(GLOBAL_VAO);
 
     (glfw, (window, events))
 }

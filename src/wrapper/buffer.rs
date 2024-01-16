@@ -77,7 +77,7 @@ impl<T> GLBuffer<T> {
 impl<T> Drop for GLBuffer<T> {
     fn drop(&mut self) {
         unsafe {
-            dogl!(gl::DeleteBuffers(1, self.handle.get() as *const u32));
+            dogl!(gl::DeleteBuffers(1, &self.handle.get() as *const u32));
         }
     }
 }

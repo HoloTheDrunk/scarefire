@@ -4,7 +4,10 @@ use crate::{
 
 use glrs::import;
 
-use std::rc::{Rc, Weak};
+use std::{
+    fmt::Debug,
+    rc::{Rc, Weak},
+};
 
 use weak_table::PtrWeakKeyHashMap as WeakMap;
 
