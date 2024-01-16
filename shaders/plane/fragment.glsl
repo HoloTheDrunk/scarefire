@@ -1,12 +1,10 @@
 #version 450
 
-#include "../structs.glsl"
-
-layout(location = 0) uniform FrameData frame_data;
-
 in vec3 vNormal;
 in vec3 vColor;
 
+out vec4 out_color;
+
 void main() {
-  gl_FragColor = gl_FragCoord.xyz;
+  out_color = gl_FragCoord;
 }

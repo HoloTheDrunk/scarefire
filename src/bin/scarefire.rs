@@ -26,11 +26,11 @@ fn init_scene() -> Scene {
     let mesh = StaticMesh::new(vertices.as_slice(), &indices);
 
     let program = Program::new_shader(ShaderPaths {
-        vertex: "shaders/plane/fragment.glsl".to_owned(),
+        fragment: "shaders/plane/fragment.glsl".to_owned(),
         geometry: None,
         tess_control: None,
         tess_evaluation: None,
-        fragment: "shaders/plane/vertex.glsl".to_owned(),
+        vertex: "shaders/plane/vertex.glsl".to_owned(),
     });
 
     let material = Material::new(Rc::new(program));

@@ -1,6 +1,14 @@
 #version 450
 
-#include "../structs.glsl"
+struct FrameData {
+    mat4 view_proj;
+
+    vec3 sun_dir;
+    uint point_light_count;
+
+    vec3 sun_color;
+    float padding_1;
+};
 
 layout(location = 0) uniform FrameData frame_data;
 
@@ -12,7 +20,7 @@ out vec3 vNormal;
 out vec3 vColor;
 
 void main() {
-  gl_Position = frame_data.view_proj * vec4(pos, 1.);
+  gl_Position = vec4(1.);// frame_data.view_proj * vec4(pos, 1.);
   vNormal = normal;
   vColor = color;
 }

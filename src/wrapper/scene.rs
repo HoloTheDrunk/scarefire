@@ -8,6 +8,8 @@ use std::rc::{Rc, Weak};
 
 use weak_table::PtrWeakKeyHashMap as WeakMap;
 
+use super::handle::BufferUsage;
+
 pub struct TransformComponents {
     position: glam::Vec3,
     rotation: glam::Quat,
@@ -133,7 +135,9 @@ impl Scene {
             sun_color: self.sun_color,
             ..Default::default()
         };
+
         let buffer = unsafe { GLBuffer::new(&[frame_data]) };
+        buffer.bind_to(BufferUsage::Uniform, 0);
 
         // TODO: Batch rendering
         for vec in self.objects.iter_material_groups() {
